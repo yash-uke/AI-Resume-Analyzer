@@ -1,15 +1,19 @@
 package com.airesumeanalyzer.auth.dto;
 
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AuthResponse {
+public class ErrorResponse {
 
+    private LocalDateTime timestamp;
+    private int status;
     private String message;
-    private String token;
 
 }
