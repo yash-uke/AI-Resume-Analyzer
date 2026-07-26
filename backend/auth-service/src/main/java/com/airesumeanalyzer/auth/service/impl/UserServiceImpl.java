@@ -4,21 +4,25 @@ import com.airesumeanalyzer.auth.dto.AuthResponse;
 import com.airesumeanalyzer.auth.dto.LoginRequest;
 import com.airesumeanalyzer.auth.dto.RegisterRequest;
 import com.airesumeanalyzer.auth.entity.User;
+import com.airesumeanalyzer.auth.jwt.JwtService;
 import com.airesumeanalyzer.auth.repository.UserRepository;
 import com.airesumeanalyzer.auth.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import com.airesumeanalyzer.auth.exception.EmailAlreadyExistsException;
+import com.airesumeanalyzer.auth.exception.InvalidCredentialsException;
 
 @Service
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     @Override
@@ -32,7 +36,7 @@ public class UserServiceImpl implements UserService {
                 .fullName(request.getFullName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role("USER")
+                .role("ROLE_USER")
                 .build();
 
         userRepository.save(user);
@@ -50,12 +54,14 @@ public class UserServiceImpl implements UserService {
                         new RuntimeException("Invalid Email or Password"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid Email or Password");
+            throw new InvalidCredentialsException("Invalid Email or Password");
         }
+
+        String token = jwtService.generateToken(user.getEmail());
 
         return new AuthResponse(
                 "Login Successful",
-                null
+                token
         );
     }
 }
