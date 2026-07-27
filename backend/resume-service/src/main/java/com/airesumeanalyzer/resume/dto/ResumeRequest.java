@@ -11,16 +11,16 @@ import lombok.*;
 @Builder
 public class ResumeRequest {
 
-    @NotNull
+    @NotNull(message = "User ID is required")
     private Long userId;
 
-    @NotBlank
+    @NotBlank(message = "File name is required")
     private String fileName;
 
-    @NotBlank
+    @NotBlank(message = "File type is required")
     private String fileType;
 
-    @NotBlank
+    @NotBlank(message = "File URL is required")
     private String fileUrl;
 
 }

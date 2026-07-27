@@ -3,12 +3,14 @@ package com.airesumeanalyzer.resume.service.impl;
 import com.airesumeanalyzer.resume.dto.ResumeRequest;
 import com.airesumeanalyzer.resume.dto.ResumeResponse;
 import com.airesumeanalyzer.resume.entity.Resume;
+import com.airesumeanalyzer.resume.exception.ResumeNotFoundException;
 import com.airesumeanalyzer.resume.repository.ResumeRepository;
 import com.airesumeanalyzer.resume.service.ResumeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +40,74 @@ public class ResumeServiceImpl implements ResumeService {
                 .fileUrl(savedResume.getFileUrl())
                 .uploadDate(savedResume.getUploadDate())
                 .status(savedResume.getStatus())
+                .build();
+    }
+    @Override
+    public List<ResumeResponse> getAllResumes() {
+
+        return resumeRepository.findAll()
+                .stream()
+                .map(resume -> ResumeResponse.builder()
+                        .id(resume.getId())
+                        .userId(resume.getUserId())
+                        .fileName(resume.getFileName())
+                        .fileType(resume.getFileType())
+                        .fileUrl(resume.getFileUrl())
+                        .uploadDate(resume.getUploadDate())
+                        .status(resume.getStatus())
+                        .build())
+                .toList();
+    }
+    @Override
+    public ResumeResponse getResumeById(Long id) {
+
+        Resume resume = resumeRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResumeNotFoundException("Resume not found with ID: " + id));
+
+        return ResumeResponse.builder()
+                .id(resume.getId())
+                .userId(resume.getUserId())
+                .fileName(resume.getFileName())
+                .fileType(resume.getFileType())
+                .fileUrl(resume.getFileUrl())
+                .uploadDate(resume.getUploadDate())
+                .status(resume.getStatus())
+                .build();
+    }
+
+    @Override
+    public void deleteResume(Long id) {
+
+        Resume resume = resumeRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResumeNotFoundException("Resume not found with ID: " + id));
+
+        resumeRepository.delete(resume);
+    }
+
+    @Override
+    public ResumeResponse updateResume(Long id, ResumeRequest request) {
+
+        Resume resume = resumeRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResumeNotFoundException("Resume not found with ID: " + id));
+
+        resume.setUserId(request.getUserId());
+        resume.setFileName(request.getFileName());
+        resume.setFileType(request.getFileType());
+        resume.setFileUrl(request.getFileUrl());
+
+        Resume updatedResume = resumeRepository.save(resume);
+
+        return ResumeResponse.builder()
+                .id(updatedResume.getId())
+                .userId(updatedResume.getUserId())
+                .fileName(updatedResume.getFileName())
+                .fileType(updatedResume.getFileType())
+                .fileUrl(updatedResume.getFileUrl())
+                .uploadDate(updatedResume.getUploadDate())
+                .status(updatedResume.getStatus())
                 .build();
     }
 }
