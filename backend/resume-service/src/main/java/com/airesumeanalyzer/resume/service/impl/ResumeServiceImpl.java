@@ -5,10 +5,15 @@ import com.airesumeanalyzer.resume.dto.ResumeResponse;
 import com.airesumeanalyzer.resume.entity.Resume;
 import com.airesumeanalyzer.resume.exception.ResumeNotFoundException;
 import com.airesumeanalyzer.resume.repository.ResumeRepository;
+import com.airesumeanalyzer.resume.service.FileStorageService;
+import com.airesumeanalyzer.resume.service.ResumeParserService;
 import com.airesumeanalyzer.resume.service.ResumeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -17,21 +22,50 @@ import java.util.List;
 public class ResumeServiceImpl implements ResumeService {
 
     private final ResumeRepository resumeRepository;
+    private final FileStorageService fileStorageService;
+    private final ResumeParserService resumeParserService;
 
     @Override
-    public ResumeResponse uploadResume(ResumeRequest request) {
+    public ResumeResponse uploadResume(Long userId, MultipartFile file) {
 
+        // Store file locally
+        String filePath = fileStorageService.storeFile(file);
+
+        // Parse uploaded resume
+        File resumeFile = new File(filePath);
+        String extractedText = resumeParserService.extractText(resumeFile);
+
+        // Print extracted text
+        System.out.println(extractedText);
+
+        // Extract filename
+        String fileName = Paths.get(filePath)
+                .getFileName()
+                .toString();
+
+        // Extract extension
+        String fileType = "";
+
+        int index = fileName.lastIndexOf(".");
+
+        if (index != -1) {
+            fileType = fileName.substring(index + 1);
+        }
+
+        // Save metadata
         Resume resume = Resume.builder()
-                .userId(request.getUserId())
-                .fileName(request.getFileName())
-                .fileType(request.getFileType())
-                .fileUrl(request.getFileUrl())
+                .userId(userId)
+                .fileName(fileName)
+                .fileType(fileType)
+                .fileUrl(filePath)
                 .uploadDate(LocalDateTime.now())
                 .status("UPLOADED")
+                .extractedText(extractedText)
                 .build();
 
         Resume savedResume = resumeRepository.save(resume);
 
+        // Return response
         return ResumeResponse.builder()
                 .id(savedResume.getId())
                 .userId(savedResume.getUserId())
@@ -40,8 +74,10 @@ public class ResumeServiceImpl implements ResumeService {
                 .fileUrl(savedResume.getFileUrl())
                 .uploadDate(savedResume.getUploadDate())
                 .status(savedResume.getStatus())
+                .extractedText(savedResume.getExtractedText())
                 .build();
     }
+
     @Override
     public List<ResumeResponse> getAllResumes() {
 
@@ -55,9 +91,11 @@ public class ResumeServiceImpl implements ResumeService {
                         .fileUrl(resume.getFileUrl())
                         .uploadDate(resume.getUploadDate())
                         .status(resume.getStatus())
+                        .extractedText(resume.getExtractedText())
                         .build())
                 .toList();
     }
+
     @Override
     public ResumeResponse getResumeById(Long id) {
 
@@ -73,6 +111,7 @@ public class ResumeServiceImpl implements ResumeService {
                 .fileUrl(resume.getFileUrl())
                 .uploadDate(resume.getUploadDate())
                 .status(resume.getStatus())
+                .extractedText(resume.getExtractedText())
                 .build();
     }
 
@@ -83,6 +122,10 @@ public class ResumeServiceImpl implements ResumeService {
                 .orElseThrow(() ->
                         new ResumeNotFoundException("Resume not found with ID: " + id));
 
+        // Delete physical file
+        fileStorageService.deleteFile(resume.getFileUrl());
+
+        // Delete database record
         resumeRepository.delete(resume);
     }
 
@@ -108,6 +151,7 @@ public class ResumeServiceImpl implements ResumeService {
                 .fileUrl(updatedResume.getFileUrl())
                 .uploadDate(updatedResume.getUploadDate())
                 .status(updatedResume.getStatus())
+                .extractedText(updatedResume.getExtractedText())
                 .build();
     }
 }

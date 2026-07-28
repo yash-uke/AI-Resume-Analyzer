@@ -1,8 +1,7 @@
 package com.airesumeanalyzer.auth.controller;
 
-import com.airesumeanalyzer.auth.dto.AuthResponse;
-import com.airesumeanalyzer.auth.dto.LoginRequest;
-import com.airesumeanalyzer.auth.dto.RegisterRequest;
+import com.airesumeanalyzer.auth.dto.*;
+import com.airesumeanalyzer.auth.service.OtpService;
 import com.airesumeanalyzer.auth.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -13,9 +12,11 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final UserService userService;
+    private final OtpService otpService;
 
-    public AuthController(UserService userService) {
+    public AuthController(UserService userService, OtpService otpService) {
         this.userService = userService;
+        this.otpService = otpService;
     }
 
     @PostMapping("/register")
@@ -30,5 +31,27 @@ public class AuthController {
             @RequestBody LoginRequest request) {
 
         return ResponseEntity.ok(userService.login(request));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+
+        otpService.sendForgotPasswordOtp(request.getEmail());
+
+        return ResponseEntity.ok("Password reset OTP sent successfully.");
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+
+        userService.resetPassword(
+                request.getEmail(),
+                request.getOtp(),
+                request.getNewPassword()
+        );
+
+        return ResponseEntity.ok("Password reset successfully.");
     }
 }

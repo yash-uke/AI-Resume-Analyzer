@@ -1,14 +1,15 @@
 package com.airesumeanalyzer.auth.service.impl;
 
 import com.airesumeanalyzer.auth.entity.Otp;
+import com.airesumeanalyzer.auth.entity.User;
 import com.airesumeanalyzer.auth.repository.OtpRepository;
+import com.airesumeanalyzer.auth.repository.UserRepository;
 import com.airesumeanalyzer.auth.service.EmailService;
 import com.airesumeanalyzer.auth.service.OtpService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import com.airesumeanalyzer.auth.entity.User;
-import com.airesumeanalyzer.auth.repository.UserRepository;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.util.Random;
 
@@ -48,33 +49,68 @@ public class OtpServiceImpl implements OtpService {
     }
 
     @Override
-    @Transactional
-    public boolean verifyOtp(String email, String otp) {
+    public void sendForgotPasswordOtp(String email) {
+
+        User user = userRepository.findByEmail(email).orElse(null);
+
+        if (user == null) {
+            throw new RuntimeException("User not found.");
+        }
+
+        sendOtp(email);
+    }
+
+    private Otp validateOtp(String email, String otp) {
 
         Otp savedOtp = otpRepository
                 .findByEmailAndOtp(email, otp)
                 .orElse(null);
 
         if (savedOtp == null) {
-            return false;
+            return null;
         }
 
         if (savedOtp.getExpiryTime().isBefore(LocalDateTime.now())) {
+            return null;
+        }
+
+        return savedOtp;
+    }
+
+    @Override
+    @Transactional
+    public boolean verifyRegistrationOtp(String email, String otp) {
+
+        Otp savedOtp = validateOtp(email, otp);
+
+        if (savedOtp == null) {
             return false;
         }
 
-// Find user
         User user = userRepository.findByEmail(email).orElse(null);
 
         if (user == null) {
             return false;
         }
 
-// Verify user
         user.setVerified(true);
         userRepository.save(user);
 
-// Delete OTP after successful verification
+        otpRepository.deleteByEmail(email);
+
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public boolean verifyResetPasswordOtp(String email, String otp) {
+
+        Otp savedOtp = validateOtp(email, otp);
+
+        if (savedOtp == null) {
+            return false;
+        }
+
         otpRepository.deleteByEmail(email);
 
         return true;

@@ -18,5 +18,7 @@ public class ResumeResponse {
     private String fileUrl;
     private LocalDateTime uploadDate;
     private String status;
+    private String extractedText;
+
 
 }

@@ -6,6 +6,8 @@ import com.airesumeanalyzer.resume.service.ResumeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -18,9 +20,10 @@ public class ResumeController {
 
     @PostMapping("/upload")
     public ResumeResponse uploadResume(
-            @Valid @RequestBody ResumeRequest request) {
+            @RequestParam Long userId,
+            @RequestParam MultipartFile file) {
 
-        return resumeService.uploadResume(request);
+        return resumeService.uploadResume(userId, file);
     }
 
     @GetMapping

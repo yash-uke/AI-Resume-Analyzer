@@ -12,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.airesumeanalyzer.auth.exception.EmailAlreadyExistsException;
 import com.airesumeanalyzer.auth.exception.InvalidCredentialsException;
 import com.airesumeanalyzer.auth.service.OtpService;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -76,5 +77,22 @@ public class UserServiceImpl implements UserService {
                 "Login Successful",
                 token
         );
+    }
+    @Override
+    @Transactional
+    public void resetPassword(String email, String otp, String newPassword) {
+
+        boolean verified = otpService.verifyResetPasswordOtp(email, otp);
+
+        if (!verified) {
+            throw new RuntimeException("Invalid or expired OTP.");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found."));
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+
+        userRepository.save(user);
     }
 }

@@ -25,7 +25,7 @@ public class OtpController {
     @PostMapping("/verify-otp")
     public String verifyOtp(@Valid @RequestBody VerifyOtpRequest request) {
 
-        boolean valid = otpService.verifyOtp(
+        boolean valid = otpService.verifyRegistrationOtp(
                 request.getEmail(),
                 request.getOtp()
         );

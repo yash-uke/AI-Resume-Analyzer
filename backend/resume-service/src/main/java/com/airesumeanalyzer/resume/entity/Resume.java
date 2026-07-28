@@ -36,4 +36,8 @@ public class Resume {
     @Column(nullable = false)
     private String status;
 
+
+    @Column(columnDefinition = "LONGTEXT")
+    private String extractedText;
+
 }
