@@ -34,6 +34,9 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String role;
 
+    @Column(nullable = false)
+    private boolean verified;
+
     // ================= UserDetails Methods =================
 
     @Override

@@ -6,7 +6,9 @@ import com.airesumeanalyzer.auth.service.EmailService;
 import com.airesumeanalyzer.auth.service.OtpService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
+import com.airesumeanalyzer.auth.entity.User;
+import com.airesumeanalyzer.auth.repository.UserRepository;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Random;
 
@@ -16,6 +18,7 @@ public class OtpServiceImpl implements OtpService {
 
     private final OtpRepository otpRepository;
     private final EmailService emailService;
+    private final UserRepository userRepository;
 
     @Override
     public void sendOtp(String email) {
@@ -45,6 +48,7 @@ public class OtpServiceImpl implements OtpService {
     }
 
     @Override
+    @Transactional
     public boolean verifyOtp(String email, String otp) {
 
         Otp savedOtp = otpRepository
@@ -58,6 +62,20 @@ public class OtpServiceImpl implements OtpService {
         if (savedOtp.getExpiryTime().isBefore(LocalDateTime.now())) {
             return false;
         }
+
+// Find user
+        User user = userRepository.findByEmail(email).orElse(null);
+
+        if (user == null) {
+            return false;
+        }
+
+// Verify user
+        user.setVerified(true);
+        userRepository.save(user);
+
+// Delete OTP after successful verification
+        otpRepository.deleteByEmail(email);
 
         return true;
     }

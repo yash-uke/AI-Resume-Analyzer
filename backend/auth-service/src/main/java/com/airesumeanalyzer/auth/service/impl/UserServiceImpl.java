@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import com.airesumeanalyzer.auth.exception.EmailAlreadyExistsException;
 import com.airesumeanalyzer.auth.exception.InvalidCredentialsException;
+import com.airesumeanalyzer.auth.service.OtpService;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -18,11 +19,13 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final OtpService otpService;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService, OtpService otpService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.otpService = otpService;
     }
 
     @Override
@@ -37,12 +40,16 @@ public class UserServiceImpl implements UserService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role("ROLE_USER")
+                .verified(false)          // New field
                 .build();
 
         userRepository.save(user);
 
+// Send OTP after registration
+        otpService.sendOtp(user.getEmail());
+
         return new AuthResponse(
-                "User Registered Successfully",
+                "User Registered Successfully. Please verify your email.",
                 null
         );
     }
@@ -53,6 +60,12 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() ->
                         new RuntimeException("Invalid Email or Password"));
 
+// Check email verification
+        if (!user.isVerified()) {
+            throw new RuntimeException("Please verify your email first.");
+        }
+
+// Check password
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new InvalidCredentialsException("Invalid Email or Password");
         }
