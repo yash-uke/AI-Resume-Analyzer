@@ -4,22 +4,21 @@ import com.airesumeanalyzer.resume.dto.ResumeRequest;
 import com.airesumeanalyzer.resume.dto.ResumeResponse;
 import com.airesumeanalyzer.resume.entity.Resume;
 import com.airesumeanalyzer.resume.exception.ResumeNotFoundException;
+import com.airesumeanalyzer.resume.kafka.event.ResumeUploadedEvent;
+import com.airesumeanalyzer.resume.kafka.producer.ResumeEventProducer;
 import com.airesumeanalyzer.resume.repository.ResumeRepository;
 import com.airesumeanalyzer.resume.service.FileStorageService;
 import com.airesumeanalyzer.resume.service.ResumeParserService;
 import com.airesumeanalyzer.resume.service.ResumeService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.io.File;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
-import com.airesumeanalyzer.resume.kafka.event.ResumeUploadedEvent;
-import com.airesumeanalyzer.resume.kafka.producer.ResumeEventProducer;
 
 @Service
-@RequiredArgsConstructor
 public class ResumeServiceImpl implements ResumeService {
 
     private final ResumeRepository resumeRepository;
@@ -27,43 +26,42 @@ public class ResumeServiceImpl implements ResumeService {
     private final ResumeParserService resumeParserService;
     private final ResumeEventProducer resumeEventProducer;
 
+    public ResumeServiceImpl(
+            ResumeRepository resumeRepository,
+            FileStorageService fileStorageService,
+            ResumeParserService resumeParserService,
+            ResumeEventProducer resumeEventProducer) {
+
+        this.resumeRepository = resumeRepository;
+        this.fileStorageService = fileStorageService;
+        this.resumeParserService = resumeParserService;
+        this.resumeEventProducer = resumeEventProducer;
+    }
+
     @Override
     public ResumeResponse uploadResume(Long userId, MultipartFile file) {
 
-        // Store file locally
         String filePath = fileStorageService.storeFile(file);
 
-        // Parse uploaded resume
         File resumeFile = new File(filePath);
         String extractedText = resumeParserService.extractText(resumeFile);
 
-        // Print extracted text
-        System.out.println(extractedText);
+        String fileName = Paths.get(filePath).getFileName().toString();
 
-        // Extract filename
-        String fileName = Paths.get(filePath)
-                .getFileName()
-                .toString();
-
-        // Extract extension
         String fileType = "";
-
         int index = fileName.lastIndexOf(".");
-
         if (index != -1) {
             fileType = fileName.substring(index + 1);
         }
 
-        // Save metadata
-        Resume resume = Resume.builder()
-                .userId(userId)
-                .fileName(fileName)
-                .fileType(fileType)
-                .fileUrl(filePath)
-                .uploadDate(LocalDateTime.now())
-                .status("UPLOADED")
-                .extractedText(extractedText)
-                .build();
+        Resume resume = new Resume();
+        resume.setUserId(userId);
+        resume.setFileName(fileName);
+        resume.setFileType(fileType);
+        resume.setFileUrl(filePath);
+        resume.setUploadDate(LocalDateTime.now());
+        resume.setStatus("UPLOADED");
+        resume.setExtractedText(extractedText);
 
         Resume savedResume = resumeRepository.save(resume);
 
@@ -75,17 +73,17 @@ public class ResumeServiceImpl implements ResumeService {
 
         resumeEventProducer.publishResumeUploadedEvent(event);
 
-        // Return response
-        return ResumeResponse.builder()
-                .id(savedResume.getId())
-                .userId(savedResume.getUserId())
-                .fileName(savedResume.getFileName())
-                .fileType(savedResume.getFileType())
-                .fileUrl(savedResume.getFileUrl())
-                .uploadDate(savedResume.getUploadDate())
-                .status(savedResume.getStatus())
-                .extractedText(savedResume.getExtractedText())
-                .build();
+        ResumeResponse response = new ResumeResponse();
+        response.setId(savedResume.getId());
+        response.setUserId(savedResume.getUserId());
+        response.setFileName(savedResume.getFileName());
+        response.setFileType(savedResume.getFileType());
+        response.setFileUrl(savedResume.getFileUrl());
+        response.setUploadDate(savedResume.getUploadDate());
+        response.setStatus(savedResume.getStatus());
+        response.setExtractedText(savedResume.getExtractedText());
+
+        return response;
     }
 
     @Override
@@ -93,16 +91,21 @@ public class ResumeServiceImpl implements ResumeService {
 
         return resumeRepository.findAll()
                 .stream()
-                .map(resume -> ResumeResponse.builder()
-                        .id(resume.getId())
-                        .userId(resume.getUserId())
-                        .fileName(resume.getFileName())
-                        .fileType(resume.getFileType())
-                        .fileUrl(resume.getFileUrl())
-                        .uploadDate(resume.getUploadDate())
-                        .status(resume.getStatus())
-                        .extractedText(resume.getExtractedText())
-                        .build())
+                .map(resume -> {
+
+                    ResumeResponse response = new ResumeResponse();
+
+                    response.setId(resume.getId());
+                    response.setUserId(resume.getUserId());
+                    response.setFileName(resume.getFileName());
+                    response.setFileType(resume.getFileType());
+                    response.setFileUrl(resume.getFileUrl());
+                    response.setUploadDate(resume.getUploadDate());
+                    response.setStatus(resume.getStatus());
+                    response.setExtractedText(resume.getExtractedText());
+
+                    return response;
+                })
                 .toList();
     }
 
@@ -113,16 +116,18 @@ public class ResumeServiceImpl implements ResumeService {
                 .orElseThrow(() ->
                         new ResumeNotFoundException("Resume not found with ID: " + id));
 
-        return ResumeResponse.builder()
-                .id(resume.getId())
-                .userId(resume.getUserId())
-                .fileName(resume.getFileName())
-                .fileType(resume.getFileType())
-                .fileUrl(resume.getFileUrl())
-                .uploadDate(resume.getUploadDate())
-                .status(resume.getStatus())
-                .extractedText(resume.getExtractedText())
-                .build();
+        ResumeResponse response = new ResumeResponse();
+
+        response.setId(resume.getId());
+        response.setUserId(resume.getUserId());
+        response.setFileName(resume.getFileName());
+        response.setFileType(resume.getFileType());
+        response.setFileUrl(resume.getFileUrl());
+        response.setUploadDate(resume.getUploadDate());
+        response.setStatus(resume.getStatus());
+        response.setExtractedText(resume.getExtractedText());
+
+        return response;
     }
 
     @Override
@@ -132,10 +137,8 @@ public class ResumeServiceImpl implements ResumeService {
                 .orElseThrow(() ->
                         new ResumeNotFoundException("Resume not found with ID: " + id));
 
-        // Delete physical file
         fileStorageService.deleteFile(resume.getFileUrl());
 
-        // Delete database record
         resumeRepository.delete(resume);
     }
 
@@ -153,15 +156,17 @@ public class ResumeServiceImpl implements ResumeService {
 
         Resume updatedResume = resumeRepository.save(resume);
 
-        return ResumeResponse.builder()
-                .id(updatedResume.getId())
-                .userId(updatedResume.getUserId())
-                .fileName(updatedResume.getFileName())
-                .fileType(updatedResume.getFileType())
-                .fileUrl(updatedResume.getFileUrl())
-                .uploadDate(updatedResume.getUploadDate())
-                .status(updatedResume.getStatus())
-                .extractedText(updatedResume.getExtractedText())
-                .build();
+        ResumeResponse response = new ResumeResponse();
+
+        response.setId(updatedResume.getId());
+        response.setUserId(updatedResume.getUserId());
+        response.setFileName(updatedResume.getFileName());
+        response.setFileType(updatedResume.getFileType());
+        response.setFileUrl(updatedResume.getFileUrl());
+        response.setUploadDate(updatedResume.getUploadDate());
+        response.setStatus(updatedResume.getStatus());
+        response.setExtractedText(updatedResume.getExtractedText());
+
+        return response;
     }
 }
