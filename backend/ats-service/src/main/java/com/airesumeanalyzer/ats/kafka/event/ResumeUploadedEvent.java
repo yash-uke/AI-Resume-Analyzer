@@ -5,14 +5,19 @@ public class ResumeUploadedEvent {
     private Long resumeId;
     private Long userId;
     private String fileName;
+    private String jobDescriptionId;
 
     public ResumeUploadedEvent() {
     }
 
-    public ResumeUploadedEvent(Long resumeId, Long userId, String fileName) {
+    public ResumeUploadedEvent(Long resumeId,
+                               Long userId,
+                               String fileName,
+                               String jobDescriptionId) {
         this.resumeId = resumeId;
         this.userId = userId;
         this.fileName = fileName;
+        this.jobDescriptionId = jobDescriptionId;
     }
 
     public Long getResumeId() {
@@ -39,12 +44,21 @@ public class ResumeUploadedEvent {
         this.fileName = fileName;
     }
 
+    public String getJobDescriptionId() {
+        return jobDescriptionId;
+    }
+
+    public void setJobDescriptionId(String jobDescriptionId) {
+        this.jobDescriptionId = jobDescriptionId;
+    }
+
     @Override
     public String toString() {
         return "ResumeUploadedEvent{" +
                 "resumeId=" + resumeId +
                 ", userId=" + userId +
                 ", fileName='" + fileName + '\'' +
+                ", jobDescriptionId='" + jobDescriptionId + '\'' +
                 '}';
     }
 }

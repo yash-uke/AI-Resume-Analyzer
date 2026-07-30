@@ -25,9 +25,10 @@ public class ResumeController {
     )
     public ResumeResponse uploadResume(
             @RequestParam("userId") Long userId,
+            @RequestParam("jobDescriptionId") String jobDescriptionId,
             @RequestPart("file") MultipartFile file) {
 
-        return resumeService.uploadResume(userId, file);
+        return resumeService.uploadResume(userId, jobDescriptionId, file);
     }
 
     @GetMapping

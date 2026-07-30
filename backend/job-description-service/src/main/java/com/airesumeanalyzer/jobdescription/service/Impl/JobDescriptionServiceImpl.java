@@ -17,8 +17,10 @@ public class JobDescriptionServiceImpl implements JobDescriptionService {
     private final JobDescriptionRepository repository;
     private final PdfExtractorService pdfExtractorService;
 
-    public JobDescriptionServiceImpl(JobDescriptionRepository repository,
-                                     PdfExtractorService pdfExtractorService) {
+    public JobDescriptionServiceImpl(
+            JobDescriptionRepository repository,
+            PdfExtractorService pdfExtractorService) {
+
         this.repository = repository;
         this.pdfExtractorService = pdfExtractorService;
     }
@@ -42,15 +44,30 @@ public class JobDescriptionServiceImpl implements JobDescriptionService {
 
         JobDescription saved = repository.save(jobDescription);
 
+        return mapToResponse(saved);
+    }
+
+    @Override
+    public JobDescriptionResponse getJobDescriptionById(String id) {
+
+        JobDescription jobDescription = repository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Job Description not found: " + id));
+
+        return mapToResponse(jobDescription);
+    }
+
+    private JobDescriptionResponse mapToResponse(JobDescription jobDescription) {
+
         JobDescriptionResponse response = new JobDescriptionResponse();
 
-        response.setId(saved.getId());
-        response.setTitle(saved.getTitle());
-        response.setCompanyName(saved.getCompanyName());
-        response.setFileName(saved.getFileName());
-        response.setFileType(saved.getFileType());
-        response.setExtractedText(saved.getExtractedText());
-        response.setUploadDate(saved.getUploadDate());
+        response.setId(jobDescription.getId());
+        response.setTitle(jobDescription.getTitle());
+        response.setCompanyName(jobDescription.getCompanyName());
+        response.setFileName(jobDescription.getFileName());
+        response.setFileType(jobDescription.getFileType());
+        response.setExtractedText(jobDescription.getExtractedText());
+        response.setUploadDate(jobDescription.getUploadDate());
 
         return response;
     }

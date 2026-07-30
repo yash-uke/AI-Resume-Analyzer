@@ -10,6 +10,10 @@ import lombok.NoArgsConstructor;
 public class ResumeUploadedEvent {
 
     private Long resumeId;
+
     private Long userId;
+
     private String fileName;
+
+    private String jobDescriptionId;
 }

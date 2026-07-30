@@ -39,7 +39,10 @@ public class ResumeServiceImpl implements ResumeService {
     }
 
     @Override
-    public ResumeResponse uploadResume(Long userId, MultipartFile file) {
+    public ResumeResponse uploadResume(
+            Long userId,
+            String jobDescriptionId,
+            MultipartFile file) {
 
         String filePath = fileStorageService.storeFile(file);
 
@@ -68,7 +71,8 @@ public class ResumeServiceImpl implements ResumeService {
         ResumeUploadedEvent event = new ResumeUploadedEvent(
                 savedResume.getId(),
                 savedResume.getUserId(),
-                savedResume.getFileName()
+                savedResume.getFileName(),
+                jobDescriptionId
         );
 
         resumeEventProducer.publishResumeUploadedEvent(event);

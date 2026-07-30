@@ -29,4 +29,13 @@ public class JobDescriptionController {
 
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<JobDescriptionResponse> getJobDescription(
+            @PathVariable String id) {
+
+        return ResponseEntity.ok(
+                jobDescriptionService.getJobDescriptionById(id)
+        );
+    }
 }

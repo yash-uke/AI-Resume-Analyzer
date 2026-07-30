@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface ResumeService {
 
-    ResumeResponse uploadResume(Long userId, MultipartFile file);
+    ResumeResponse uploadResume(Long userId, String jobDescriptionId, MultipartFile file);
 
     List<ResumeResponse> getAllResumes();
 

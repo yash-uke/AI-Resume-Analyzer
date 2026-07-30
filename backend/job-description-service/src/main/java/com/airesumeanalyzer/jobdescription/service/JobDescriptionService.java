@@ -12,4 +12,6 @@ public interface JobDescriptionService {
             String title,
             String companyName
     ) throws IOException;
+
+    JobDescriptionResponse getJobDescriptionById(String id);
 }
