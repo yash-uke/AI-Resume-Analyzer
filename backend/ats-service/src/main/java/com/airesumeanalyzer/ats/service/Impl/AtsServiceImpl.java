@@ -118,6 +118,8 @@ public class AtsServiceImpl implements AtsService {
                             + String.join(", ", missingSkills));
         }
 
+        atsResult.setCreatedAt(LocalDateTime.now());
+
         return atsResultRepository.save(atsResult);
     }
 

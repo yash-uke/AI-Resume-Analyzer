@@ -17,3 +17,4 @@ public class ResumeUploadedEvent {
 
     private String jobDescriptionId;
 }
+

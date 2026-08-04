@@ -24,6 +24,8 @@ public class JobDescriptionController {
             @RequestParam("title") String title,
             @RequestParam("companyName") String companyName) throws IOException {
 
+        System.out.println("==== CONTROLLER HIT ====");
+
         JobDescriptionResponse response =
                 jobDescriptionService.uploadJobDescription(file, title, companyName);
 
